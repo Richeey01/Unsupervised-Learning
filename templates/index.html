@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Country Clustering – Unsupervised Learning</title>
+  <style>
+  <style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+    color: #333;
+  }
+
+  header {
+    background: #2b6cb0;
+    color: white;
+    padding: 20px;
+    text-align: center;
+  }
+
+  header h1 { font-size: 1.6rem; }
+  header p { font-size: 0.9rem; }
+
+  .container {
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 10px;
+  }
+
+  .card {
+    background: white;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+  }
+
+  .card h2 {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    color: #2b6cb0;
+  }
+
+  .card p {
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .badges {
+    margin-top: 10px;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 4px 10px;
+    margin-right: 6px;
+    background: #e2e8f0;
+    border-radius: 10px;
+    font-size: 0.75rem;
+  }
+
+  .fig-wrap img {
+    width: 100%;
+    border: 1px solid #ddd;
+  }
+
+  .fig-cap {
+    font-size: 0.8rem;
+    margin-top: 6px;
+    color: #666;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+
+  th, td {
+    padding: 8px;
+    border: 1px solid #ddd;
+  }
+
+  th {
+    background: #2b6cb0;
+    color: white;
+  }
+
+  .best-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+  }
+
+  .best-card {
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 6px;
+  }
+
+  .country-name {
+    font-weight: bold;
+    margin-bottom: 6px;
+  }
+
+  .winner-box {
+    margin-top: 15px;
+    padding: 10px;
+    border: 1px solid #aaa;
+    background: #f0f0f0;
+    border-radius: 6px;
+  }
+
+  footer {
+    text-align: center;
+    padding: 15px;
+    font-size: 0.8rem;
+    color: #666;
+  }
+</style>
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🌍 Country Clustering with K-Means</h1>
+  <p>Unsupervised Learning &nbsp;|&nbsp; Dataset: <strong>Country-data</strong> (Kaggle)</p>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <h2>📂 Dataset</h2>
+    <p>167 countries, 5 features selected for training.</p>
+    <div class="badges">
+      <span class="badge b-green">gdpp</span>
+      <span class="badge b-green">child_mort</span>
+      <span class="badge b-green">income</span>
+      <span class="badge b-green">life_expec</span>
+      <span class="badge b-green">health</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🤖 What is Unsupervised Learning?</h2>
+    <p>A type of machine learning where the model finds hidden patterns in data <strong>without labels</strong>. The algorithm groups similar data points on its own — no correct answers provided.</p>
+  </div>
+
+  <div class="card">
+    <h2>📋 Project Description</h2>
+    <p>K-Means groups 167 countries into 3 clusters by socioeconomic indicators. Features scaled with <code>StandardScaler</code>.</p>
+    <div class="badges" style="margin-top: 14px;">
+      <span class="badge b-green">Cluster 0 – Developing</span>
+      <span class="badge b-gold">Cluster 1 – Developed</span>
+      <span class="badge b-red">Cluster 2 – Underdeveloped</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="fig-wrap">
+      <img src="{{ url_for('static', filename='cluster_plot.png') }}" alt="Cluster plot"/>
+      <p class="fig-cap">Figure 1. GDP per capita vs child mortality — 167 countries.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🏆 Best Country per Cluster</h2>
+    <p>Scored by: <code style="background:#edf2f7; padding:2px 8px; border-radius:4px;">score = (income + gdpp) / (child_mort + 1)</code></p>
+    <div class="best-grid">
+      {% for item in best_per_cluster %}
+      <div class="best-card c{{ item.cluster }}">
+        <h3>Cluster {{ item.cluster }} — {{ item.label }}</h3>
+        <div class="country-name">{{ item.country }}</div>
+        <div class="stat">Child mortality: <span>{{ item.child_mort }} per 1000</span></div>
+        <div class="stat">Income: <span>${{ "{:,}".format(item.income) }}</span></div>
+        <div class="stat">GDP/capita: <span>${{ "{:,}".format(item.gdpp) }}</span></div>
+        <div class="stat">Life expectancy: <span>{{ item.life_expec }} yrs</span></div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="winner-box">
+      <div class="trophy">🥇</div>
+      <div>
+        <div class="winner-name">{{ best_overall['country'] }}</div>
+        <div class="winner-stats">
+          Child mort: {{ best_overall['child_mort'] }} &nbsp;|&nbsp;
+          Income: ${{ "{:,.0f}".format(best_overall['income']) }} &nbsp;|&nbsp;
+          GDP: ${{ "{:,.0f}".format(best_overall['gdpp']) }} &nbsp;|&nbsp;
+          Life exp: {{ best_overall['life_expec'] }} yrs
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🗂️ 10 Sample Records</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Country</th><th>Child Mort.</th><th>Income</th><th>GDP/capita</th><th>Life Exp.</th><th>Health %</th><th>Cluster</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in samples %}
+        <tr>
+          <td>{{ row.country }}</td>
+          <td>{{ row.child_mort }}</td>
+          <td>${{ "{:,}".format(row.income) }}</td>
+          <td>${{ "{:,}".format(row.gdpp) }}</td>
+          <td>{{ row.life_expec }}</td>
+          <td>{{ row.health }}</td>
+          <td><span class="cl-{{ row.cluster }}">{{ row.cluster }} – {{ cluster_names[row.cluster] }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<footer>Unsupervised Learning &nbsp;|&nbsp; K-Means &nbsp;|&nbsp; Country-data Dataset</footer>
+
+</body>
+</html>
