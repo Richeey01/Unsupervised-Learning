@@ -45,7 +45,7 @@
 
 ### 1. Клонировать репозиторий
 ```bash
-git clone https://github.com/your-username/your-repo.git
+git clone https://github.com/Richeey01/Unsupervised-Learning.git
 cd your-repo
 ````
 
